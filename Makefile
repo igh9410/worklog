@@ -34,7 +34,7 @@ help:
 >   '  make install-hook HOOK_REPO="/path/to/repo"'
 
 fmt:
-> gofmt -w cmd/worklog/main.go internal/config/config.go internal/config/config_test.go internal/entry/entry.go internal/gitlog/gitlog.go internal/obsidian/daily.go internal/obsidian/daily_test.go
+> gofmt -w cmd/worklog/main.go internal/config/config.go internal/config/config_test.go internal/entry/entry.go internal/gitlog/gitlog.go internal/installhook/doc.go internal/installhook/install_hook_test.go internal/obsidian/daily.go internal/obsidian/daily_test.go
 
 test:
 > $(GO) test ./...

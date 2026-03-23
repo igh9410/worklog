@@ -56,6 +56,7 @@ set -euo pipefail
 
 $managed_marker
 original_hook_path=$escaped_original_hook_path
+install_bin_path=$escaped_install_bin_path
 original_hook_status=0
 
 if [[ -x "\$original_hook_path" ]]; then
@@ -63,7 +64,7 @@ if [[ -x "\$original_hook_path" ]]; then
 fi
 
 repo_root=\$(git rev-parse --show-toplevel 2>/dev/null) || exit "\$original_hook_status"
-"$escaped_install_bin_path" capture-commit --repo "\$repo_root" >/dev/null 2>&1 || true
+"\$install_bin_path" capture-commit --repo "\$repo_root" >/dev/null 2>&1 || true
 exit "\$original_hook_status"
 EOF
 chmod 0755 "$hook_path"

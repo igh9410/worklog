@@ -27,6 +27,23 @@ printf 'worklog:%s\n' "$*" >> "$WORKLOG_TEST_LOG"
 	})
 }
 
+func TestInstallHookSupportsWhitespaceInInstallPath(t *testing.T) {
+	repoDir := initGitRepo(t)
+	worklogPath := writeExecutable(t, filepath.Join(repoDir, "bin dir"), "fake-worklog", `#!/usr/bin/env bash
+printf 'worklog:%s\n' "$*" >> "$WORKLOG_TEST_LOG"
+`)
+	logPath := filepath.Join(repoDir, "hook.log")
+
+	runInstallHook(t, repoDir, worklogPath)
+
+	hookPath := filepath.Join(repoDir, ".git", "hooks", "post-commit")
+	runHook(t, repoDir, hookPath, logPath)
+
+	assertLogLines(t, logPath, []string{
+		"worklog:capture-commit --repo " + repoDir,
+	})
+}
+
 func TestInstallHookChainsExistingPostCommitAndIsIdempotent(t *testing.T) {
 	repoDir := initGitRepo(t)
 	logPath := filepath.Join(repoDir, "hook.log")

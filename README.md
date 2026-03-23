@@ -95,6 +95,7 @@ Notes:
 - `WORKLOG_DAILY_NOTES_DIR="."` matches your current vault layout where daily notes live at the vault root
 - `make install-hook HOOK_REPO="/path/to/repo"` installs the hook into that repository's `.git/hooks/post-commit`
 - `make install-hook` does not change `git config --global core.hooksPath`
+- If a repo already has `post-commit`, `make install-hook` moves it to `post-commit.worklog-original` and installs a wrapper that runs both hooks
 
 ## Git hook
 

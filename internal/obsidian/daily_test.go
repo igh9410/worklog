@@ -58,3 +58,43 @@ func TestAppendDailyEntryCreatesAndAppends(t *testing.T) {
 		}
 	}
 }
+
+func TestAppendDailyEntryAddsNewlineBeforeExistingContent(t *testing.T) {
+	tempDir := t.TempDir()
+	cfg := &config.Config{
+		VaultPath:     tempDir,
+		DailyNotesDir: "Daily",
+		Timezone:      "Local",
+	}
+
+	logEntry := entry.Entry{
+		Kind:       entry.KindNote,
+		CapturedAt: time.Date(2026, 3, 23, 3, 26, 0, 0, time.Local),
+		Note:       "Investigated append behavior",
+	}
+
+	notePath := filepath.Join(tempDir, "Daily", "2026-03-23.md")
+	if err := os.MkdirAll(filepath.Dir(notePath), 0o755); err != nil {
+		t.Fatalf("failed to create daily notes directory: %v", err)
+	}
+	if err := os.WriteFile(notePath, []byte("# existing"), 0o644); err != nil {
+		t.Fatalf("failed to seed note: %v", err)
+	}
+
+	if _, err := AppendDailyEntry(cfg, logEntry); err != nil {
+		t.Fatalf("AppendDailyEntry returned error: %v", err)
+	}
+
+	content, err := os.ReadFile(notePath)
+	if err != nil {
+		t.Fatalf("failed to read note: %v", err)
+	}
+
+	text := string(content)
+	if strings.Contains(text, "# existing## 03:26") {
+		t.Fatalf("expected note append to insert a newline before the heading, got:\n%s", text)
+	}
+	if !strings.Contains(text, "# existing\n## 03:26") {
+		t.Fatalf("expected note append to preserve a newline before the heading, got:\n%s", text)
+	}
+}

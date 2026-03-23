@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+managed_marker='# worklog-managed-hook'
 repo_arg="${1:-}"
 install_bin_path="${2:-}"
 
@@ -32,13 +33,38 @@ else
 fi
 
 hook_path="$hooks_dir/post-commit"
+original_hook_path="$hooks_dir/post-commit.worklog-original"
 install -d "$hooks_dir"
+
+if [[ -f "$hook_path" ]]; then
+  if ! grep -Fq "$managed_marker" "$hook_path"; then
+    if [[ -e "$original_hook_path" ]]; then
+      printf 'Refusing to overwrite %s because %s already exists. Resolve the hook chain manually.\n' "$hook_path" "$original_hook_path" >&2
+      exit 1
+    fi
+    mv "$hook_path" "$original_hook_path"
+    printf 'Moved existing post-commit hook to %s\n' "$original_hook_path"
+  fi
+fi
+
+printf -v escaped_original_hook_path '%q' "$original_hook_path"
+printf -v escaped_install_bin_path '%q' "$install_bin_path"
+
 cat >"$hook_path" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root=\$(git rev-parse --show-toplevel 2>/dev/null || exit 0)
-"$install_bin_path" capture-commit --repo "\$repo_root" >/dev/null 2>&1 || true
+$managed_marker
+original_hook_path=$escaped_original_hook_path
+original_hook_status=0
+
+if [[ -x "\$original_hook_path" ]]; then
+  "\$original_hook_path" "\$@" || original_hook_status=\$?
+fi
+
+repo_root=\$(git rev-parse --show-toplevel 2>/dev/null) || exit "\$original_hook_status"
+"$escaped_install_bin_path" capture-commit --repo "\$repo_root" >/dev/null 2>&1 || true
+exit "\$original_hook_status"
 EOF
 chmod 0755 "$hook_path"
 

@@ -26,17 +26,45 @@ func AppendDailyEntry(cfg *config.Config, logEntry entry.Entry) (string, error) 
 		return "", fmt.Errorf("stat daily note: %w", err)
 	}
 
-	file, err := os.OpenFile(notePath, os.O_APPEND|os.O_WRONLY, 0o644)
+	file, err := os.OpenFile(notePath, os.O_APPEND|os.O_RDWR, 0o644)
 	if err != nil {
 		return "", fmt.Errorf("open daily note: %w", err)
 	}
 	defer file.Close()
+
+	if err := ensureTrailingNewline(file); err != nil {
+		return "", fmt.Errorf("prepare daily note append: %w", err)
+	}
 
 	if _, err := file.WriteString(renderEntry(logEntry)); err != nil {
 		return "", fmt.Errorf("append daily entry: %w", err)
 	}
 
 	return notePath, nil
+}
+
+func ensureTrailingNewline(file *os.File) error {
+	info, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("stat daily note: %w", err)
+	}
+	if info.Size() == 0 {
+		return nil
+	}
+
+	var tail [1]byte
+	if _, err := file.ReadAt(tail[:], info.Size()-1); err != nil {
+		return fmt.Errorf("read daily note tail: %w", err)
+	}
+	if tail[0] == '\n' {
+		return nil
+	}
+
+	if _, err := file.WriteString("\n"); err != nil {
+		return fmt.Errorf("append separator newline: %w", err)
+	}
+
+	return nil
 }
 
 func renderDailyHeader(capturedAt time.Time) string {

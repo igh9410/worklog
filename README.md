@@ -68,6 +68,33 @@ With your current vault path, the env form would be:
 export WORKLOG_VAULT_PATH="/home/geonhyuk/Documents/Obsidian Vault"
 ```
 
+## Makefile
+
+For day-to-day setup, use the repository `Makefile`:
+
+```bash
+make test
+make build
+make install
+```
+
+For a fresh machine, bootstrap everything in one command:
+
+```bash
+make bootstrap \
+  WORKLOG_VAULT_PATH="/home/geonhyuk/Documents/Obsidian Vault" \
+  WORKLOG_DAILY_NOTES_DIR="." \
+  WORKLOG_TIMEZONE="Asia/Seoul"
+```
+
+Notes:
+
+- `make install` installs the binary and global Git hook
+- `make install-config` creates `~/.config/worklog/config.json` if it does not exist
+- `make overwrite-config` replaces the config file with the provided values
+- `WORKLOG_DAILY_NOTES_DIR="."` matches your current vault layout where daily notes live at the vault root
+- `CONFIGURE_GIT_HOOKS=0` writes the hook file without changing `git config --global core.hooksPath`
+
 ## Git hook
 
 An example hook is in [scripts/post-commit.example.sh](/home/geonhyuk/Documents/CS/Projects/worklog/scripts/post-commit.example.sh).

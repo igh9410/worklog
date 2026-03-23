@@ -33,7 +33,7 @@ Example config:
 
 The repository includes a sample at [config.example.json](/home/geonhyuk/Documents/CS/Projects/worklog/config.example.json).
 
-`ignore_repos` is useful when your Obsidian vault is also a git repository, so the global hook does not log vault commits back into the vault.
+`ignore_repos` is useful when your Obsidian vault is also a git repository, so a repo-local hook does not log vault commits back into the vault.
 
 ## Environment
 
@@ -89,18 +89,31 @@ make bootstrap \
 
 Notes:
 
-- `make install` installs the binary and global Git hook
+- `make install` installs the binary and a `post-commit` hook for `HOOK_REPO` (defaults to the current directory)
 - `make install-config` creates `~/.config/worklog/config.json` if it does not exist
 - `make overwrite-config` replaces the config file with the provided values
 - `WORKLOG_DAILY_NOTES_DIR="."` matches your current vault layout where daily notes live at the vault root
-- `CONFIGURE_GIT_HOOKS=0` writes the hook file without changing `git config --global core.hooksPath`
+- `make install-hook HOOK_REPO="/path/to/repo"` installs the hook into that repository's `.git/hooks/post-commit`
+- `make install-hook` does not change `git config --global core.hooksPath`
 
 ## Git hook
 
 An example hook is in [scripts/post-commit.example.sh](/home/geonhyuk/Documents/CS/Projects/worklog/scripts/post-commit.example.sh).
 
-Once the CLI is installed, a global Git hook can call:
+Once the CLI is installed, each repository can use a local `post-commit` hook that calls:
 
 ```bash
 worklog capture-commit --repo "$(git rev-parse --show-toplevel)"
+```
+
+To install that hook into another repository from this checkout:
+
+```bash
+make install-hook HOOK_REPO="/path/to/repo"
+```
+
+If you used an older global hook setup, unset it so repo-local hooks can run again:
+
+```bash
+git config --global --unset core.hooksPath
 ```

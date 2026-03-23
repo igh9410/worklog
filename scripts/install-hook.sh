@@ -20,12 +20,18 @@ repo_root="$(git -C "$repo_arg" rev-parse --show-toplevel 2>/dev/null)" || {
   exit 1
 }
 
+worktree_hooks_path="$(git -C "$repo_root" config --worktree --get core.hooksPath 2>/dev/null || true)"
 local_hooks_path="$(git -C "$repo_root" config --local --get core.hooksPath 2>/dev/null || true)"
-if [[ -n "$local_hooks_path" ]]; then
-  if [[ "$local_hooks_path" = /* ]]; then
-    hooks_dir="$local_hooks_path"
+effective_hooks_path="$worktree_hooks_path"
+if [[ -z "$effective_hooks_path" ]]; then
+  effective_hooks_path="$local_hooks_path"
+fi
+
+if [[ -n "$effective_hooks_path" ]]; then
+  if [[ "$effective_hooks_path" = /* ]]; then
+    hooks_dir="$effective_hooks_path"
   else
-    hooks_dir="$repo_root/$local_hooks_path"
+    hooks_dir="$repo_root/$effective_hooks_path"
   fi
 else
   git_common_dir="$(git -C "$repo_root" rev-parse --path-format=absolute --git-common-dir)"

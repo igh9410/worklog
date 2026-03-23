@@ -87,6 +87,26 @@ printf 'worklog:%s\n' "$*" >> "$WORKLOG_TEST_LOG"
 	assertFileContains(t, hookPath, "# worklog-managed-hook")
 }
 
+func TestInstallHookUsesWorktreeCoreHooksPath(t *testing.T) {
+	repoDir := initGitRepo(t)
+	worklogPath := writeExecutable(t, repoDir, "fake-worklog", `#!/usr/bin/env bash
+printf 'worklog:%s\n' "$*" >> "$WORKLOG_TEST_LOG"
+`)
+	logPath := filepath.Join(repoDir, "hook.log")
+
+	runCmd(t, "", "git", "-C", repoDir, "config", "extensions.worktreeConfig", "true")
+	runCmd(t, "", "git", "-C", repoDir, "config", "--worktree", "core.hooksPath", ".wt-hooks")
+	runInstallHook(t, repoDir, worklogPath)
+
+	hookPath := filepath.Join(repoDir, ".wt-hooks", "post-commit")
+	runHook(t, repoDir, hookPath, logPath)
+
+	assertFileContains(t, hookPath, "# worklog-managed-hook")
+	assertLogLines(t, logPath, []string{
+		"worklog:capture-commit --repo " + repoDir,
+	})
+}
+
 func initGitRepo(t *testing.T) string {
 	t.Helper()
 
